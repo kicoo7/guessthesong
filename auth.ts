@@ -5,4 +5,7 @@ export const {
   auth,
 } = NextAuth({
   providers: [Spotify],
+  pages: {
+    signIn: "/auth/signin",
+  },
 });
