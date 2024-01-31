@@ -23,11 +23,12 @@ export default function Player({ trackUri, image, blur = true, className }: { tr
     };
 
     return (
-        <div className={clsx("w-40 h-40", className)} >
+        <div className={clsx("w-full")} >
             <Image src={image} width="160" height="160" className={clsx(blur === true && "blur-md", "z-50")} alt="Album Cover" />
+
             <div className="invisible">
                 <div id="embed-iframe" ref={iframeRef} />
             </div>
-        </ div>
+        </div>
     );
 }

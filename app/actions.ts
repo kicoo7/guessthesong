@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function getSpotifyAccessToken() {
   const authorizationToken = Buffer.from(
@@ -9,7 +10,7 @@ export async function getSpotifyAccessToken() {
       process.env.AUTH_SPOTIFY_ID +
       ":" +
       process.env.AUTH_SPOTIFY_SECRET
-    ).toString("base64")
+    ).toString()
   );
 
   const { access_token } = await fetch(
@@ -102,4 +103,56 @@ export async function answerQuestion(
   // check if users
 
   // revalidatePath("challenge/");
+}
+
+export async function createNewChallenge(formData: FormData) {
+  const name = formData.get("name");
+  const spotifyPlaylistUri = formData.get("spotifyPlaylistUri");
+
+  // const ChallengeSchema = z.object({
+  //   name: z.string(),
+  //   spotifyPlaylistUri: z.string(),
+  // });
+  // zod.parse(ChallengeSchema, { name, spotifyPlaylistUri });
+
+  // save to db;
+
+  // redirect to challenge page;
+  redirect("/challenge/" + "123");
+}
+
+async function saveTrackForUser(id: string) {
+  //https://api.spotify.com/v1/me/tracks
+
+  const url = new URL("/v1/me/tracks", "https://api.spotify.com");
+  url.searchParams.set("ids", id);
+  await fetch(url, {
+    method: "PUT",
+    headers: {},
+  });
+}
+
+async function removeTrackForUser(id: string) {
+  //https://api.spotify.com/v1/me/tracks
+
+  const url = new URL("/v1/me/tracks", "https://api.spotify.com");
+  url.searchParams.set("ids", id);
+  await fetch(url, {
+    method: "DELETE",
+    headers: {},
+  });
+}
+
+async function checkIfTrackIsSavedForUser(id: string) {
+  const url = new URL("/v1/me/tracks/contains", "https://api.spotify.com");
+  url.searchParams.set("ids", id);
+
+  const result = await fetch(url, {
+    method: "GET",
+    headers: {},
+  });
+
+  const body = await result.json();
+
+  return body[0];
 }
