@@ -4,6 +4,7 @@ import Image from "next/image";
 import clsx from "clsx";
 import PhoneFrame from "@/components/phone-frame";
 import { Button } from "@/components/ui/button";
+import GuessSongForm from "@/components/song-form";
 
 function QuestionWithOptions({
   question,
@@ -78,7 +79,7 @@ export default async function Page({
   // const isAnswered = await getUserAnswerByQuestionId({ questionId })
 
   const challengeName = "The ultimate 90s challenge";
-  const isAnswered = true;
+  const isAnswered = false;
   const trackUri = "spotify:track:2xLMifQCjDGFmkHkpNLD9h";
   const cover =
     "https://i.scdn.co/image/ab67616d0000b273c5b2c6c8b0a7c9e6e4a3c5b2";
@@ -123,16 +124,7 @@ export default async function Page({
             </div>
 
             <div className="w-full p-4">
-              {isAnswered === true ? (
-                <Result />
-              ) : (
-                <QuestionWithOptions
-                  questionId={questionId}
-                  challengeId={challengeId}
-                  question={question}
-                  options={options}
-                />
-              )}
+             <GuessSongForm questionId={questionId} challengeId={challengeId}/>
             </div>
 
             {/* <Player trackUri={trackUri} image={cover} blur={!isAnswered} /> */}

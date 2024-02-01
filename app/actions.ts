@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+// move to other file
 export async function getSpotifyAccessToken() {
   const authorizationToken = Buffer.from(
     (
@@ -31,6 +32,7 @@ export async function getSpotifyAccessToken() {
   return access_token;
 }
 
+// move to page
 export async function getQuestion({ accessToken }: { accessToken: string }) {
   const playlistId = "7lCdRaKVszpqw6e8pxfZm1";
   const playlistUrl = new URL(
@@ -105,6 +107,7 @@ export async function answerQuestion(
   // revalidatePath("challenge/");
 }
 
+// not used
 export async function createNewChallenge(formData: FormData) {
   const name = formData.get("name");
   const spotifyPlaylistUri = formData.get("spotifyPlaylistUri");
@@ -120,6 +123,7 @@ export async function createNewChallenge(formData: FormData) {
   // redirect to challenge page;
   redirect("/challenge/" + "123");
 }
+
 
 async function saveTrackForUser(id: string) {
   //https://api.spotify.com/v1/me/tracks
