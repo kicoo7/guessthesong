@@ -82,21 +82,30 @@ export async function handleSubmitAnswerForm(formData: FormData) {
   // redirect to result page;
 }
 
-export async function answerQuestion(
-  challengeId: string,
-  questionId: string,
-  formData: FormData
-) {
-  // save to db;
-
+export async function startChallenge(challengeId: string){
+  // 
   const session = await auth();
-  console.log(
-    "session",
-    session,
-    challengeId,
-    questionId,
-    formData.get("optionId")
-  );
+
+  if(session === null){
+    throw new Error("Session is not valid.");
+  }
+
+  console.log(`Challenge with id ${challengeId} is starting for user ${session.user?.name}`);
+
+  // await updateDatabase(userId, challengeId); 
+
+}
+
+export async function answerQuestion(formData: FormData) {
+  // getQuestion
+
+  const challengeId = formData.get("challenge-id");
+  const questionId = formData.get("question-id");
+  const selectedOption = formData.get("selected-option");
+
+  // save to db;
+  const session = await auth();
+  console.log("session", session, challengeId, questionId, selectedOption);
 
   setTimeout(() => {}, 2000);
   // check if user is legit
@@ -105,6 +114,8 @@ export async function answerQuestion(
   // check if users
 
   // revalidatePath("challenge/");
+
+  return "Answer 2";
 }
 
 // not used
@@ -123,7 +134,6 @@ export async function createNewChallenge(formData: FormData) {
   // redirect to challenge page;
   redirect("/challenge/" + "123");
 }
-
 
 async function saveTrackForUser(id: string) {
   //https://api.spotify.com/v1/me/tracks

@@ -1,17 +1,22 @@
 "use client";
-
-import { useFormStatus } from "react-dom";
+import { useFormStatus, useFormState } from "react-dom";
 import { Button } from "./ui/button";
 import { answerQuestion } from "@/app/actions";
+import clsx from "clsx";
 
-function OptionButton({ option }: { option: string }) {
+function OptionButton({ option }: { option: string}) {
   const { pending, data } = useFormStatus();
+  const selectedOption = data?.get("selected-option");
+  const isSelected = option === selectedOption;
+
   return (
     <Button
+      type="submit"
       size={"lg"}
       variant={"outline"}
-      className="rounded-full w-full"
-      disabled={pending || Boolean(data)}
+      className={clsx([isSelected && "animate-pulse bg-orange-700", "rounded-full w-full"])}
+      disabled={pending}
+      name="selected-option"
       value={String(option)}
     >
       {option}
@@ -27,22 +32,15 @@ export default function GuessSongForm({
   questionId: string;
   challengeId: string;
   options: string[];
-}) {
-  const shuffledOptions = options.sort(() => Math.random() - 0.5);
-
-  // use formState to update the right/wrong question
-  const answerQuestionWithChallengeIdAndQuestionId = answerQuestion.bind(
-    null,
-    challengeId,
-    questionId
-  );
-
+}) { 
   return (
-    <form action={answerQuestionWithChallengeIdAndQuestionId}>
+    <form action={answerQuestion}>
+      <input type="hidden" name="challenge-id" value={challengeId} />
+      <input type="hidden" name="question-id" value={questionId} />
       <ul className="w-full">
-        {shuffledOptions.map((option, index) => (
+        {options.map((option, index) => (
           <li key={index} className="mb-2">
-            <OptionButton option={option}/>
+            <OptionButton option={option} />
           </li>
         ))}
       </ul>

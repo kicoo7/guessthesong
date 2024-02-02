@@ -1,7 +1,6 @@
 import GuessSongForm from "@/components/song-form";
 import Image from "next/image";
 
-
 export default async function GuessSongPage({
   params:{ challengeId }
 }: {
@@ -27,6 +26,7 @@ export default async function GuessSongPage({
     "Answer 4",
   ];
 
+  const shuffledOptions = options.sort(() => Math.random() - 0.5);
 
   return (
     <div className="w-full">
@@ -53,7 +53,7 @@ export default async function GuessSongPage({
         </div>
 
         <div className="p-4">
-            <GuessSongForm questionId={questionId} challengeId={challengeId} options={options}/> 
+            <GuessSongForm questionId={questionId} challengeId={challengeId} options={shuffledOptions}/> 
         </div>
       </div>
     </div>
