@@ -1,7 +1,7 @@
 "use client";
 import { useFormStatus, useFormState } from "react-dom";
 import { Button } from "./ui/button";
-import { answerQuestion } from "@/app/actions";
+import { guessSong } from "@/app/actions";
 import clsx from "clsx";
 
 function OptionButton({ option }: { option: string}) {
@@ -14,7 +14,7 @@ function OptionButton({ option }: { option: string}) {
       type="submit"
       size={"lg"}
       variant={"outline"}
-      className={clsx([isSelected && "animate-pulse bg-orange-700", "rounded-full w-full"])}
+      className={clsx([isSelected && "animate-pulse bg-orange-700", "rounded-full w-full", "text-ellipsis", "overflow-hidden"])}
       disabled={pending}
       name="selected-option"
       value={String(option)}
@@ -25,18 +25,18 @@ function OptionButton({ option }: { option: string}) {
 }
 
 export default function GuessSongForm({
-  questionId,
+  round,
   challengeId,
   options,
 }: {
-  questionId: string;
+  round: number;
   challengeId: string;
   options: string[];
 }) { 
   return (
-    <form action={answerQuestion}>
+    <form action={guessSong}>
       <input type="hidden" name="challenge-id" value={challengeId} />
-      <input type="hidden" name="question-id" value={questionId} />
+      <input type="hidden" name="round" value={round} />
       <ul className="w-full">
         {options.map((option, index) => (
           <li key={index} className="mb-2">

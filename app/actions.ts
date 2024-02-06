@@ -1,121 +1,64 @@
 "use server";
 
 import { auth } from "@/auth";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createChallengeAttempt, getChallengeAttemptByEmail, getChallengeById, updateChallengeAttempt } from "./db";
+import { revalidatePath } from "next/cache";
 
-// move to other file
-export async function getSpotifyAccessToken() {
-  const authorizationToken = Buffer.from(
-    (
-      process.env.AUTH_SPOTIFY_ID +
-      ":" +
-      process.env.AUTH_SPOTIFY_SECRET
-    ).toString()
-  );
 
-  const { access_token } = await fetch(
-    "https://accounts.spotify.com/api/token",
-    {
-      next: { revalidate: 3400 },
-      headers: {
-        Authorization: "Basic " + authorizationToken,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      method: "POST",
-      body: new URLSearchParams({
-        grant_type: "client_credentials",
-      }),
-    }
-  ).then((res) => res.json());
-
-  return access_token;
-}
-
-// move to page
-export async function getQuestion({ accessToken }: { accessToken: string }) {
-  const playlistId = "7lCdRaKVszpqw6e8pxfZm1";
-  const playlistUrl = new URL(
-    `/v1/playlists/${playlistId}/tracks`,
-    "https://api.spotify.com."
-  );
-  playlistUrl.searchParams.set("market", "US");
-
-  const { items } = await fetch(playlistUrl, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
-    .then((res) => res.json())
-    .catch((err) => console.log("err fetching tracks", err));
-
-  console.log("result", result);
-
-  var mainTrack = "";
-  var cover = "";
-  var trackUri = "";
-  items.forEach((item, index) => {
-    if (index === 0) {
-      console.log("track", item.track);
-      // preview_url (30sec cann be nullable);
-      mainTrack = item.track.external_urls.spotify;
-      cover = item.track.album.images[0].url;
-      trackUri = item.track.uri;
-      console.log("mainTrack", mainTrack, item.track.name);
-    }
-  });
-
-  const embedUrl = new URL("/oembed", "https://open.spotify.com");
-  embedUrl.searchParams.set("url", mainTrack);
-  const res = await fetch(embedUrl);
-  // console.log("fetch", embedUrl);
-  const song = await res.json();
-}
-
-export async function handleSubmitAnswerForm(formData: FormData) {
-  const answerId = formData.get("answer");
-  const questionId = formData.get("question");
-
-  console.log("answer", answerId, questionId);
-  // save answer to db;
-
-  // redirect to result page;
-}
+const MAX_NUMBER_ROUNDS = 10;
 
 export async function startChallenge(challengeId: string){
-  // 
   const session = await auth();
 
-  if(session === null){
+  if(!session || !session.user?.email){
     throw new Error("Session is not valid.");
   }
 
-  console.log(`Challenge with id ${challengeId} is starting for user ${session.user?.name}`);
+  await createChallengeAttempt(challengeId, session.user.email);
 
-  // await updateDatabase(userId, challengeId); 
-
+  revalidatePath(`/c/${challengeId}`);
 }
 
-export async function answerQuestion(formData: FormData) {
-  // getQuestion
-
-  const challengeId = formData.get("challenge-id");
-  const questionId = formData.get("question-id");
-  const selectedOption = formData.get("selected-option");
-
-  // save to db;
+export async function guessSong(formData: FormData) {
   const session = await auth();
-  console.log("session", session, challengeId, questionId, selectedOption);
-
-  setTimeout(() => {}, 2000);
-  // check if user is legit
+  if(!session || !session.user?.email){
+    throw new Error("Session is not valid.");
+  }
   // check if user has started this challengeId
 
-  // check if users
+  // getQuestion
+  // check if user is legit
+  const challengeId = formData.get("challenge-id");
+  const round = formData.get("round");
+  const selectedOption = formData.get("selected-option");
 
-  // revalidatePath("challenge/");
+  if(!challengeId || !round || !selectedOption){
+    throw new Error("Invalid form data");
+  }
+  // zod
+  const attempt = await getChallengeAttemptByEmail(String(challengeId), session.user.email);
 
-  return "Answer 2";
+  if(!attempt){
+    throw new Error("Attempt not found");
+  }
+
+  const challenge = await getChallengeById(String(challengeId));
+  if(!challenge){
+    throw new Error("Challenge not found");
+  }
+
+  const song = challenge.songs[Number(round)-1];
+  const isCorrect = song.name === selectedOption;
+  const newRound = Number(round) + 1;
+
+  await updateChallengeAttempt(String(challengeId), session.user.email, {
+    score: isCorrect ? attempt.score + 100 : attempt.score,
+    round: newRound,
+    finishedAt: newRound <= MAX_NUMBER_ROUNDS ? undefined : Date.now(),
+  })
+  
+  revalidatePath(`c/${challengeId}`);
 }
 
 // not used
