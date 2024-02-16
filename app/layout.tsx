@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Script from "next/script";
-
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import Player from "@/components/player";
@@ -23,6 +22,7 @@ export default function RootLayout({
       >
         {children}
         <Player />
+        <SpeedInsights/>
       </body>
     </html>
   );
