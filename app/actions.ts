@@ -1,115 +1,174 @@
 "use server";
-
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { createChallengeAttempt, getChallengeAttemptByEmail, getChallengeById, updateChallengeAttempt } from "./db";
-import { revalidatePath } from "next/cache";
-
+import {
+  createChallengeAttempt,
+  deleteChallengeAttempt,
+  getChallengeAttemptByEmail,
+  getChallengeById,
+  updateChallengeAttempt,
+} from "./db";
+import { revalidateTag } from "next/cache";
+import { z } from "zod";
 
 const MAX_NUMBER_ROUNDS = 10;
+const CORRECT_ANSWER_POINTS = 100;
+const WRONG_ANSWER_POINTS = 0;
 
-export async function startChallenge(challengeId: string){
+export async function getSessionOrFail() {
   const session = await auth();
 
-  if(!session || !session.user?.email){
+  if (!session || session.error === "RefreshAccessTokenError") {
     throw new Error("Session is not valid.");
   }
 
-  await createChallengeAttempt(challengeId, session.user.email);
+  const SessionSchema = z.object({
+    user: z.object({
+      name: z.string(),
+      email: z.string().email(),
+    }),
+    access_token: z.string(),
+    refresh_token: z.string(),
+  });
 
-  revalidatePath(`/c/${challengeId}`);
+  // validate session
+  SessionSchema.parse(session);
+
+  return session;
+}
+
+export async function startChallenge(challengeId: string) {
+  try {
+    const session = await getSessionOrFail();
+    const email = String(session?.user?.email);
+    await createChallengeAttempt(challengeId, email);
+  } catch (e) {
+    console.error("Error in startChallenge(): ", e);
+    redirect("/");
+  }
+
+  revalidateTag("attempt");
+}
+
+export async function restartChallenge(challengeId: string) {
+  const session = await getSessionOrFail();
+  const email = String(session?.user?.email);
+
+  await deleteChallengeAttempt(challengeId, email);
+
+  revalidateTag("attempt");
 }
 
 export async function guessSong(formData: FormData) {
-  const session = await auth();
-  if(!session || !session.user?.email){
-    throw new Error("Session is not valid.");
-  }
-  // check if user has started this challengeId
+  const session = await getSessionOrFail();
+  const email = String(session?.user?.email);
 
-  // getQuestion
-  // check if user is legit
-  const challengeId = formData.get("challenge-id");
-  const round = formData.get("round");
-  const selectedOption = formData.get("selected-option");
+  const GuessSongSchema = z.object({
+    challengeId: z.string().uuid(),
+    round: z.number().int().positive().min(1).max(MAX_NUMBER_ROUNDS),
+    selectedOption: z.string().min(1),
+  });
 
-  if(!challengeId || !round || !selectedOption){
-    throw new Error("Invalid form data");
-  }
-  // zod
-  const attempt = await getChallengeAttemptByEmail(String(challengeId), session.user.email);
+  const { challengeId, round, selectedOption } = GuessSongSchema.parse({
+    challengeId: String(formData.get("challenge-id")),
+    round: Number(formData.get("round")),
+    selectedOption: String(formData.get("selected-option")),
+  });
 
-  if(!attempt){
-    throw new Error("Attempt not found");
-  }
+  const attemptPromise = getChallengeAttemptByEmail(challengeId, email);
+  const challengePromise = getChallengeById(challengeId);
 
-  const challenge = await getChallengeById(String(challengeId));
-  if(!challenge){
-    throw new Error("Challenge not found");
+  const attempt = await attemptPromise;
+  if (!attempt) {
+    throw new Error("Error in guessSong(): Attempt not found");
   }
 
-  const song = challenge.songs[Number(round)-1];
+  const challenge = await challengePromise;
+  if (!challenge) {
+    throw new Error("Error in guessSong(): Challenge not found");
+  }
+
+  const song = challenge.songs[round - 1];
   const isCorrect = song.name === selectedOption;
-  const newRound = Number(round) + 1;
+  const nextRound = Number(round) + 1;
 
-  await updateChallengeAttempt(String(challengeId), session.user.email, {
-    score: isCorrect ? attempt.score + 100 : attempt.score,
-    round: newRound,
-    finishedAt: newRound <= MAX_NUMBER_ROUNDS ? undefined : Date.now(),
-  })
-  
-  revalidatePath(`c/${challengeId}`);
+  await updateChallengeAttempt(challengeId, email, {
+    score: isCorrect ? CORRECT_ANSWER_POINTS : WRONG_ANSWER_POINTS,
+    round: round,
+    lastAnswer: selectedOption,
+    finishedAt: nextRound <= MAX_NUMBER_ROUNDS ? undefined : Date.now(),
+  });
+
+  revalidateTag("attempt");
 }
 
-// not used
-export async function createNewChallenge(formData: FormData) {
-  const name = formData.get("name");
-  const spotifyPlaylistUri = formData.get("spotifyPlaylistUri");
+export async function startNextRound(challengeId: string) {
+  const session = await getSessionOrFail();
+  const email = String(session?.user?.email);
 
-  // const ChallengeSchema = z.object({
-  //   name: z.string(),
-  //   spotifyPlaylistUri: z.string(),
-  // });
-  // zod.parse(ChallengeSchema, { name, spotifyPlaylistUri });
+  const attempt = await getChallengeAttemptByEmail(challengeId, email);
+  if (!attempt) {
+    throw new Error("Error in startNextRound(): Attempt not found");
+  }
 
-  // save to db;
+  const nextRound = attempt.round + 1;
+  await updateChallengeAttempt(challengeId, email, {
+    score: 0,
+    round: nextRound,
+    lastAnswer: null, // reset last answer
+    finishedAt: nextRound <= MAX_NUMBER_ROUNDS ? undefined : Date.now(),
+  });
 
-  // redirect to challenge page;
-  redirect("/challenge/" + "123");
+  revalidateTag("attempt");
 }
 
-async function saveTrackForUser(id: string) {
-  //https://api.spotify.com/v1/me/tracks
+export async function saveTrackForUser(trackId: string) {
+  if (!trackId) {
+    throw new Error("Error in saveTrackForUser(): Invalid track id");
+  }
+
+  const session = await getSessionOrFail();
 
   const url = new URL("/v1/me/tracks", "https://api.spotify.com");
-  url.searchParams.set("ids", id);
-  await fetch(url, {
+  url.searchParams.set("ids", trackId);
+
+  const response = await fetch(url, {
     method: "PUT",
-    headers: {},
+    headers: {
+      Authorization: `Bearer ${session?.access_token}`,
+      "Content-Type": "application/json",
+    },
   });
+
+  if (!response.ok) {
+    throw new Error(`Error in saveTrackForUser(): ${response.statusText}`);
+  }
+
+  revalidateTag("saved-track");
 }
 
-async function removeTrackForUser(id: string) {
-  //https://api.spotify.com/v1/me/tracks
+export async function removeSavedTrackForUser(trackId: string) {
+  if (!trackId) {
+    throw new Error("Error in removeSavedTrackForUser(): Invalid track id");
+  }
+
+  const session = await getSessionOrFail();
 
   const url = new URL("/v1/me/tracks", "https://api.spotify.com");
-  url.searchParams.set("ids", id);
-  await fetch(url, {
+  url.searchParams.set("ids", trackId);
+
+  const response = await fetch(url, {
     method: "DELETE",
-    headers: {},
-  });
-}
-
-async function checkIfTrackIsSavedForUser(id: string) {
-  const url = new URL("/v1/me/tracks/contains", "https://api.spotify.com");
-  url.searchParams.set("ids", id);
-
-  const result = await fetch(url, {
-    method: "GET",
-    headers: {},
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
   });
 
-  const body = await result.json();
+  if (!response.ok) {
+    throw new Error(
+      `Error in removeSavedTrackForUser(): ${response.statusText}`
+    );
+  }
 
-  return body[0];
+  revalidateTag("saved-track");
 }
