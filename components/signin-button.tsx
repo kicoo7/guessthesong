@@ -5,11 +5,11 @@ import { signIn } from "next-auth/react";
 export function SignInButton() {
   async function handleSignInWithSpotifyClick() {
     signIn("spotify", {
-      callbackUrl: new URL("http://localhost:3000/").pathname,
+      callbackUrl: process.env.NEXT_PUBLIC_VERCEL_URL,
     });
   }
 
   return (
-    <Button onClick={handleSignInWithSpotifyClick}>Sign In With Spotify</Button>
+    <Button onClick={handleSignInWithSpotifyClick} className="w-full rounded-full">Sign In With Spotify</Button>
   );
 }
