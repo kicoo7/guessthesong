@@ -13,6 +13,7 @@ export const {
       // we update the scope to include user-library-modify so we can save and remove tracks from the user's library
       authorization: "https://accounts.spotify.com/authorize?scope=user-read-email,user-library-read,user-library-modify"
     }),
+
   ],
   callbacks: {
     async jwt({ token, account }) {

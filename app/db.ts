@@ -25,6 +25,7 @@ import {
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { SpotifyPlaylist } from "./spotify";
+import { cache } from "react";
 
 const TABLE_NAME = String(process.env.TABLE_NAME);
 
@@ -103,7 +104,7 @@ export const getChallengeById = unstable_cache(async (id: string) => {
   return result.Item;
 }, ["challenge"], { tags: ["challenge"] });
 
-export const getChallengeAttemptByEmail = unstable_cache(
+export const getChallengeAttemptByEmail = cache(
   async (challengeId: string, email: string) => {
     const query = new GetCommand({
       TableName: TABLE_NAME,
@@ -116,8 +117,6 @@ export const getChallengeAttemptByEmail = unstable_cache(
     const result = await ddbDocClient.send(query);
     return result.Item;
   },
-  ["attempt"],
-  { tags: ["attempt"] }
 );
 
 export const createChallengeAttempt = async (
