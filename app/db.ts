@@ -90,7 +90,8 @@ export const createChallenge = async (spotifyPlaylist: SpotifyPlaylist) => {
   return result;
 };
 
-export const getChallengeById = unstable_cache(
+export const getChallengeById = 
+// unstable_cache(
   async (id: string) => {
     const query = new GetCommand({
       TableName: TABLE_NAME,
@@ -102,12 +103,14 @@ export const getChallengeById = unstable_cache(
 
     const result = await ddbDocClient.send(query);
     return result.Item;
-  },
-  ["challenge"],
-  { tags: ["challenge"] }
-);
+}
+// ,
+//   ["challenge"],
+//   { tags: ["challenge"] }
+// );
 
-export const getChallengeAttemptByEmail = unstable_cache(
+export const getChallengeAttemptByEmail = 
+// unstable_cache(
   async (challengeId: string, email: string) => {
     const query = new GetCommand({
       TableName: TABLE_NAME,
@@ -119,10 +122,11 @@ export const getChallengeAttemptByEmail = unstable_cache(
 
     const result = await ddbDocClient.send(query);
     return result.Item;
-  },
-  ["attempt"],
-  { tags: ["attempt"], revalidate: 10 }
-);
+  }
+  // ,
+ // ["attempt"],
+  //{ tags: ["attempt"], revalidate: 10 }
+//);
 
 export const createChallengeAttempt = async (
   challengeId: string,

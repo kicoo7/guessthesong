@@ -23,11 +23,7 @@ export default function Player() {
             let callback = (EmbedController: any) => {
               EmbedController.addListener("ready", () => {
                 window.EmbedController = EmbedController;
-                console.log("The Embed has initialized");
-              });
-
-              EmbedController.addListener("playback_update", (e: any) => {
-                // console.log("playback_update", e);
+                console.log("The EmbedController is ready");
               });
             };
             IFrameAPI.createController(element, options, callback);
