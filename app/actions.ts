@@ -47,7 +47,7 @@ export async function startChallenge(challengeId: string) {
     redirect("/");
   }
 
-  redirect(`/c/${challengeId}`);
+  revalidateTag("attempt");
 }
 
 export async function restartChallenge(challengeId: string) {
@@ -56,7 +56,7 @@ export async function restartChallenge(challengeId: string) {
 
   await deleteChallengeAttempt(challengeId, email);
 
-   redirect(`/c/${challengeId}`);
+   revalidateTag("attempt");
 }
 
 export async function guessSong(formData: FormData) {
@@ -99,7 +99,7 @@ export async function guessSong(formData: FormData) {
     finishedAt: nextRound <= MAX_NUMBER_ROUNDS ? undefined : Date.now(),
   });
 
-  redirect(`/c/${challengeId}`);
+  revalidateTag("attempt");
 }
 
 export async function startNextRound(challengeId: string) {
@@ -119,7 +119,7 @@ export async function startNextRound(challengeId: string) {
     finishedAt: nextRound <= MAX_NUMBER_ROUNDS ? undefined : Date.now(),
   });
 
-  redirect(`/c/${challengeId}`);
+  revalidateTag("attempt");
 }
 
 export async function saveTrackForUser(trackId: string) {

@@ -25,7 +25,6 @@ import {
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { SpotifyPlaylist } from "./spotify";
-import { cache } from "react";
 
 const TABLE_NAME = String(process.env.TABLE_NAME);
 
@@ -91,20 +90,24 @@ export const createChallenge = async (spotifyPlaylist: SpotifyPlaylist) => {
   return result;
 };
 
-export const getChallengeById = unstable_cache(async (id: string) => {
-  const query = new GetCommand({
-    TableName: TABLE_NAME,
-    Key: {
-      id: id,
-      type: "challenge",
-    },
-  });
+export const getChallengeById = unstable_cache(
+  async (id: string) => {
+    const query = new GetCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        id: id,
+        type: "challenge",
+      },
+    });
 
-  const result = await ddbDocClient.send(query);
-  return result.Item;
-}, ["challenge"], { tags: ["challenge"] });
+    const result = await ddbDocClient.send(query);
+    return result.Item;
+  },
+  ["challenge"],
+  { tags: ["challenge"] }
+);
 
-export const getChallengeAttemptByEmail = cache(
+export const getChallengeAttemptByEmail = unstable_cache(
   async (challengeId: string, email: string) => {
     const query = new GetCommand({
       TableName: TABLE_NAME,
@@ -117,6 +120,8 @@ export const getChallengeAttemptByEmail = cache(
     const result = await ddbDocClient.send(query);
     return result.Item;
   },
+  ["attempt"],
+  { tags: ["attempt"], revalidate: 10 }
 );
 
 export const createChallengeAttempt = async (
@@ -169,7 +174,10 @@ export const updateChallengeAttempt = async (
   return result;
 };
 
-export const deleteChallengeAttempt = async (challengeId: string, email: string) => {
+export const deleteChallengeAttempt = async (
+  challengeId: string,
+  email: string
+) => {
   const deleteCommand = new DeleteCommand({
     TableName: TABLE_NAME,
     Key: {
@@ -180,7 +188,7 @@ export const deleteChallengeAttempt = async (challengeId: string, email: string)
 
   const result = await ddbDocClient.send(deleteCommand);
   return result;
-}
+};
 
 export type Song = {
   id: string;
