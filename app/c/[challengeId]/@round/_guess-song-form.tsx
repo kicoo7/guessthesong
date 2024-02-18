@@ -1,34 +1,39 @@
 "use client";
 import { guessSong } from "@/app/actions";
+import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import React from "react";
 import { useFormStatus } from "react-dom";
 
 export default function GuessSongForm({
-  round,
-  challengeId,
   options,
-  uri,
+  challengeId,
+  round,
 }: {
-  round: number;
-  challengeId: string;
   options: string[];
-  uri: string;
+  challengeId: string;
+  round: number;
 }) {
-  useEffect(() => {
-    window.EmbedController?.loadUri(uri);
-    window.EmbedController?.seek(15);
-    window.EmbedController?.play();
-  }, [uri]);
+  async function guessSongWithIdAndRound(formData: FormData) {
+    formData.append("challenge-id", challengeId);
+    formData.append("round", String(round));
+
+    // wait 2 seconds before sending the request
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await guessSong(formData);
+  }
 
   return (
-    <form action={guessSong}>
+    <form action={guessSongWithIdAndRound}>
       <input type="hidden" name="challenge-id" value={challengeId} />
       <input type="hidden" name="round" value={round} />
       <ul className="w-full">
-        {options.map((option, index) => (
-          <li key={index} className="mb-2">
+        {options.map((option) => (
+          <li
+            key={option.toLowerCase().trim().replace(" ", "-")}
+            className="mb-3"
+          >
             <OptionButton option={option} />
           </li>
         ))}
@@ -38,33 +43,22 @@ export default function GuessSongForm({
 }
 
 function OptionButton({ option }: { option: string }) {
-  const { pending } = useFormStatus();
-  const [isSelected, setIsSelected] = useState(false);
-  
-  function onClick(){
-    setIsSelected(true);
-  }
+  const { pending, data } = useFormStatus();
+  const isSelected = data?.get("selected-option") === option;
 
   return (
-    <div className={clsx([isSelected ? "border border-orange-400 rounded-full animate-in" : "border-none"])}>
-      <Button
-        onClick = {onClick}
-        type="submit"
-        size={"lg"}
-        variant={"outline"}
-        className={clsx([
-          isSelected && "bg-orange-600",
-          isSelected && "text-slate-50",
-          "rounded-full w-full",
-          "text-ellipsis",
-          "overflow-hidden",
-        ])}
-        disabled={pending && isSelected === false}
-        name="selected-option"
-        value={String(option)}
-      >
-        {option}
-      </Button>
-    </div>
+    <Button
+      size={"lg"}
+      type={"submit"}
+      className={clsx([
+        isSelected ? "bg-orange-400 hover:bg-orange-400 disabled:bg-orange-400" : "bg-none",
+        "rounded-lg w-full text-sm font-mono shadow-3xl border border-[#313131]",
+      ])}
+      disabled={pending}
+      name="selected-option"
+      value={String(option)}
+    >
+      <span className="truncate">{option}</span>
+    </Button>
   );
 }

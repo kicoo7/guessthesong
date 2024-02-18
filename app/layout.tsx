@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import Player from "@/components/player";
@@ -18,11 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${GeistSans.variable} ${GeistMono.variable} bg-slate-900`}
+        className={`${GeistSans.variable} ${GeistMono.variable} bg-slate-950 font-mono min-h-screen`}
       >
         {children}
         <Player />
-        <SpeedInsights/>
+        <SpeedInsights />
       </body>
     </html>
   );

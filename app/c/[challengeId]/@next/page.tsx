@@ -1,14 +1,24 @@
-import { Attempt, Challenge, getChallengeAttemptByEmail, getChallengeById } from "@/app/db";
+import {
+  Attempt,
+  Challenge,
+  getChallengeAttemptByEmail,
+  getChallengeById,
+} from "@/app/db";
 import { clsx } from "clsx";
 import Image from "next/image";
-import NextRoundForm from "./_next-round-form";
 import { auth } from "@/auth";
 import StatusBar from "@/components/status-bar";
 import { SubmitButton } from "@/components/submit-button";
 import { getIsTrackSavedForUser } from "@/app/spotify";
-import { removeSavedTrackForUser, saveTrackForUser } from "@/app/actions";
+import {
+  removeSavedTrackForUser,
+  saveTrackForUser,
+  startNextRound,
+} from "@/app/actions";
+import { Heart, HeartOff, Trash } from "lucide-react";
+import { CORRECT_ANSWER_POINTS, WRONG_ANSWER_POINTS } from "@/app/utils";
 
-const CORRECT_ANSWER_TITLE = "Correct";
+const CORRECT_ANSWER_TITLE = "You guessed correctly!";
 const WRONG_ANSWER_TITLE = "You guessed wrong!";
 
 export default async function RoundResult({
@@ -19,13 +29,15 @@ export default async function RoundResult({
   const session = await auth();
   const email = String(session?.user?.email);
 
-  const challenge = await getChallengeById(challengeId) as Challenge;
-  const attempt = await getChallengeAttemptByEmail(challengeId, email) as Attempt;
+  const challenge = (await getChallengeById(challengeId)) as Challenge;
+  const attempt = (await getChallengeAttemptByEmail(
+    challengeId,
+    email
+  )) as Attempt;
 
   const { round, lastAnswer } = attempt;
-  
+
   const song = challenge.songs[round - 1];
-  const isCorrect = lastAnswer === song.name;
 
   const isTrackSaved = await getIsTrackSavedForUser(song.id);
   const saveTrackForUserWithId = saveTrackForUser.bind(null, song.id);
@@ -33,54 +45,88 @@ export default async function RoundResult({
     null,
     song.id
   );
+  const startNextRoundWithChallengeId = startNextRound.bind(null, challengeId);
 
   return (
-    <div className="w-full flex flex-col">
-      <StatusBar title={challenge.title} />
-      <div className="mt-10">
-        <Image
-          priority
-          src={song.imageUrl}
-          draggable={false}
-          width="160"
-          height="160"
-          style={{
-            objectFit: "cover",
-          }}
-          className="z-50 w-48 h-48 mx-auto"
-          alt="Album Cover"
-        />
+    <>
+      <div className="absolute top-0 left-0 right-0">
+        <StatusBar title={challenge.title} />
       </div>
+      <div className="flex flex-col pt-16">
+        <div>
+          <Image
+            priority
+            src={song.imageUrl}
+            draggable={false}
+            width="160"
+            height="160"
+            style={{
+              objectFit: "cover",
+            }}
+            className="z-50 w-42 h-42 mx-auto"
+            alt="Album Cover"
+          />
+        </div>
 
-      <div className="flex flex-col text-center gap-2 p-6 pb-8">
-        <h3 className="text-2xl font-semibold text-slate-50 tracking-tight leading-7">
-          {song.name}
-        </h3>
-        <p className="font-mono text-gray-400 font-light text-sm">
-          {song.artists.map((artist: string) => artist).join(", ")}
-        </p>
+        <div className="flex flex-col text-center gap-1 pt-6 px-8 pb-8">
+          <h3 className="text-xl font-semibold tracking-tight text-pretty text-slate-50">
+            {song.name}
+          </h3>
+          <p className="text-sm text-gray-400 font-light">
+            {song.artists.map((artist: string) => artist).join(", ")}
+          </p>
+          <GuessResult
+            songName={song.name}
+            selectedOption={String(lastAnswer)}
+          />
+        </div>
+        <div className="flex flex-col px-6 gap-4">
+          <form action={startNextRoundWithChallengeId}>
+            <SubmitButton>
+              {round <= 9 ? "Next song" : "See results"}
+            </SubmitButton>
+          </form>
+          {isTrackSaved === false ? (
+            <form action={saveTrackForUserWithId}>
+              <SubmitButton>
+                <Heart className="h-4 w-4 mr-2" /> Save track
+              </SubmitButton>
+            </form>
+          ) : (
+            <form action={removeSavedTrackForUserWithId}>
+              <SubmitButton>
+                <Trash className="h-4 w-4 mr-2" /> Remove track
+              </SubmitButton>
+            </form>
+          )}
+        </div>
       </div>
+    </>
+  );
+}
 
-      <div className="flex flex-col px-6 gap-4">
-        <p
-          className={clsx([
-            isCorrect ? "text-green-600" : "text-slate-50",
-            "w-full font-mono font-semibold text-center text-lg tracking-tight leading-7",
-          ])}
-        >
-          {isCorrect ? CORRECT_ANSWER_TITLE : WRONG_ANSWER_TITLE}
-        </p>
-        <NextRoundForm challengeId={challengeId} round={round} />
-        {isTrackSaved === false ? (
-          <form action={saveTrackForUserWithId}>
-            <SubmitButton>Save track</SubmitButton>
-          </form>
-        ) : (
-          <form action={removeSavedTrackForUserWithId}>
-            <SubmitButton>Remove track</SubmitButton>
-          </form>
-        )}
-      </div>
+function GuessResult({
+  songName,
+  selectedOption,
+}: {
+  songName: string;
+  selectedOption: string;
+}) {
+  const isCorrect = songName === selectedOption;
+  const title = isCorrect ? CORRECT_ANSWER_TITLE : WRONG_ANSWER_TITLE;
+  const points = isCorrect ? CORRECT_ANSWER_POINTS : WRONG_ANSWER_POINTS;
+
+  return (
+    <div
+      className={clsx(
+        "mt-4 py-2.5 rounded-full",
+        isCorrect ? "bg-green-700" : "bg-red-700"
+      )}
+    >
+      <p className={"text-slate-50 font-semibold text-center text-sm"}>
+        {title}
+      </p>
+      <p className="mt-1 text-xs font-medium text-slate-50">{points} points</p>
     </div>
   );
 }

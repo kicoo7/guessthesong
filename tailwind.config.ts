@@ -17,6 +17,9 @@ const config = {
         "2xl": "1400px",
       },
     },
+    boxShadow: {
+      "3xl": "4px 4px 0 0 rgba(58, 51, 251, 0.9)",
+    },
     extend: {
       colors: {
         border: "hsl(var(--border))",

@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { getSessionOrFail } from "./actions";
+import { getSessionOrFail } from "./utils";
 
 const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
 

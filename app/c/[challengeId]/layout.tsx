@@ -1,7 +1,7 @@
 import { getChallengeAttemptByEmail, getChallengeById } from "@/app/db";
-import { auth } from "@/auth";
+import { getSessionOrFail } from "@/app/utils";
 import PhoneFrame from "@/components/phone-frame";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ReactNode } from "react";
 
 const [NOT_STARTED, IN_PROGRESS, COMPLETED, NEXT_ROUND] = [
@@ -26,13 +26,9 @@ export default async function ChallengeLayout({
     challengeId: string;
   };
 }) {
-  const session = await auth();
-  const email = String(session?.user?.email);
+  const session = await getSessionOrFail();
+  const { email } = session.user;
   let componentToRender = children;
-
-  if (!session || !email) {
-    redirect("/");
-  }
 
   const challengePromise = getChallengeById(challengeId);
   const attemptPromise = getChallengeAttemptByEmail(challengeId, email);
@@ -60,15 +56,11 @@ export default async function ChallengeLayout({
     case COMPLETED:
       componentToRender = score;
       break;
-    // default:
-    //   redirect("/");
   }
 
   return (
-    <main className="max-w-screen-lg mx-auto md:p-8">
-      <div className="mx-auto w-fit">
-        <PhoneFrame>{componentToRender}</PhoneFrame>
-      </div>
+    <main className="md:flex md:justify-center md:items-center md:h-full bg-gray-950 md:bg-none">
+      <PhoneFrame>{componentToRender}</PhoneFrame>
     </main>
   );
 }
@@ -90,5 +82,5 @@ function getStatus(attempt: any) {
     return IN_PROGRESS;
   }
 
-  return null;
+  return NOT_STARTED;
 }

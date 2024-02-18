@@ -8,14 +8,18 @@ export default async function ChallengePage({
 }: {
   params: { challengeId: string };
 }) {
-  const challenge = await getChallengeById(challengeId) as Challenge; 
-  const { title, description, id, imageUrl } = challenge;
+  const challenge = (await getChallengeById(challengeId)) as Challenge;
+  const { title, id, songs, imageUrl } = challenge;
 
   const startChallengeWithId = startChallenge.bind(null, id);
+  const artists = songs
+    .slice(0, 5)
+    .map((s) => s.artists.join(", "))
+    .join(", ");
 
   return (
-     <div className="flex flex-col h-full w-full py-10 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-      <div className="mx-auto">
+    <>
+      <div className="w-full bg-gradient-to-b from-gray-800 to-gray-950 pt-12 pb-4">
         <Image
           alt="challenge image"
           src={imageUrl}
@@ -24,15 +28,20 @@ export default async function ChallengePage({
           className="w-64 h-64 mx-auto object-contain aspect-auto"
         />
       </div>
-      <div className="p-4">
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        <p className="mt-2 tracking-tight">{description}</p>
-        <div className="mt-6 flex">
-          <form action={startChallengeWithId}>
-            <SubmitButton>Start Challenge</SubmitButton>
-          </form>
-        </div>
+      <div className="p-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-50">
+          {title}
+        </h1>
+        <p className="mt-2 text-sm text-indigo-400">
+          <span className="text-gray-400">
+            Discover songs from these artists:
+          </span>{" "}
+          {artists}, and more
+        </p>
+        <form action={startChallengeWithId} className="mt-6">
+          <SubmitButton>Start Challenge</SubmitButton>
+        </form>
       </div>
-    </div>
+    </>
   );
 }

@@ -10,14 +10,14 @@ export const {
     SpotifyProvider({
       clientId: process.env.AUTH_SPOTIFY_ID,
       clientSecret: process.env.AUTH_SPOTIFY_SECRET,
-      // we update the scope to include user-library-modify so we can save and remove tracks from the user's library
+      // we update the scope to include user-library read & modify so we can save and remove tracks from the user's library
       authorization: "https://accounts.spotify.com/authorize?scope=user-read-email,user-library-read,user-library-modify"
     }),
 
   ],
   callbacks: {
     async jwt({ token, account }) {
-      // we need the access_token, and refresh_token to make requests on behalf of the user to the Spotify API like save track, remove track, etc.
+      // we need the access_token, and refresh_token to make requests on behalf of the user to the Spotify API
       if (account) {
         token = {
           ...token,
@@ -26,13 +26,13 @@ export const {
           expires_at: Date.now() + Number(account.expires_in) * 1000,
         };
       }
-      // if the access token has not expired yet, return it
+      // if the access token has not expired yet, return our jwt
       else if (Date.now() < Number(token?.expires_at)) {
         return token;
       }
 
       try {
-        // refresh expired access_token
+        // refresh expired access_token, and return our jwt with updated values for access_token, refresh_token, expires_at
         const { access_token, refresh_token, expires_in } =
           await refreshSpotifyAccessToken(token.refresh_token);
 

@@ -31,7 +31,7 @@ export default function Player() {
         }}
       />
 
-      <div className="invisible absolute">
+      <div className="invisible absolute top-0 left-0">
         <div id="embed-iframe" />
       </div>
     </>

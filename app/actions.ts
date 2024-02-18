@@ -1,6 +1,4 @@
 "use server";
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import {
   createChallengeAttempt,
   deleteChallengeAttempt,
@@ -10,58 +8,34 @@ import {
 } from "./db";
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
-
-const MAX_NUMBER_ROUNDS = 10;
-const CORRECT_ANSWER_POINTS = 100;
-const WRONG_ANSWER_POINTS = 0;
-
-export async function getSessionOrFail() {
-  const session = await auth();
-
-  if (!session || session.error === "RefreshAccessTokenError") {
-    throw new Error("Session is not valid.");
-  }
-
-  const SessionSchema = z.object({
-    user: z.object({
-      name: z.string(),
-      email: z.string().email(),
-    }),
-    access_token: z.string(),
-    refresh_token: z.string(),
-  });
-
-  // validate session
-  SessionSchema.parse(session);
-
-  return session;
-}
+import {
+  CORRECT_ANSWER_POINTS,
+  MAX_NUMBER_ROUNDS,
+  WRONG_ANSWER_POINTS,
+  getSessionOrFail,
+} from "./utils";
 
 export async function startChallenge(challengeId: string) {
-  try {
-    const session = await getSessionOrFail();
-    const email = String(session?.user?.email);
-    await createChallengeAttempt(challengeId, email);
-  } catch (e) {
-    console.error("Error in startChallenge(): ", e);
-    redirect("/");
-  }
+  const session = await getSessionOrFail();
+  const email = String(session.user.email);
+
+  await createChallengeAttempt(challengeId, email);
 
   revalidateTag("attempt");
 }
 
 export async function restartChallenge(challengeId: string) {
   const session = await getSessionOrFail();
-  const email = String(session?.user?.email);
+  const { email } = session.user;
 
   await deleteChallengeAttempt(challengeId, email);
 
-   revalidateTag("attempt");
+  revalidateTag("attempt");
 }
 
 export async function guessSong(formData: FormData) {
   const session = await getSessionOrFail();
-  const email = String(session?.user?.email);
+  const { email } = session.user;
 
   const GuessSongSchema = z.object({
     challengeId: z.string().uuid(),
@@ -104,7 +78,7 @@ export async function guessSong(formData: FormData) {
 
 export async function startNextRound(challengeId: string) {
   const session = await getSessionOrFail();
-  const email = String(session?.user?.email);
+  const { email } = session.user;
 
   const attempt = await getChallengeAttemptByEmail(challengeId, email);
   if (!attempt) {
@@ -135,7 +109,7 @@ export async function saveTrackForUser(trackId: string) {
   const response = await fetch(url, {
     method: "PUT",
     headers: {
-      Authorization: `Bearer ${session?.access_token}`,
+      Authorization: `Bearer ${session.access_token}`,
       "Content-Type": "application/json",
     },
   });
