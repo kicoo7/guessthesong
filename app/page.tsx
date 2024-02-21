@@ -1,7 +1,15 @@
+import { auth } from "@/auth";
 import PhoneFrame from "@/components/phone-frame";
 import { SignInButton } from "@/components/signin-button";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
+
+  const session = await auth();
+  if(session && session.user?.email && !session.error){
+    redirect("/c/4377cd9b-bc13-4182-8277-db61895009b3")
+  }
+
   return (
     <main className="w-full md:flex md:items-center md:justify-center md:p-8">
       <PhoneFrame>
