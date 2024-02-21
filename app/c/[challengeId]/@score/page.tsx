@@ -54,11 +54,13 @@ export default async function Score({
 
         <div className="flex flex-col text-center p-6 pb-8 gap-2">
           <h3 className="text-2xl font-semibold text-slate-50 tracking-tight leading-7">
-            Results
+            Score
           </h3>
-          <p className="font-mono font-semibold text-green-400">{score} points</p>
           <p className="font-mono font-semibold text-green-400">
-            {guessedCorrectly}/{MAX_NUMBER_ROUNDS}
+            {score} points
+          </p>
+          <p className="font-mono text-sm text-slate-50">
+            You guessed {guessedCorrectly}/{MAX_NUMBER_ROUNDS} songs
           </p>
         </div>
 

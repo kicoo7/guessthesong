@@ -1,6 +1,5 @@
 "use client";
 import { guessSong } from "@/app/actions";
-import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
 import React from "react";
@@ -19,7 +18,7 @@ export default function GuessSongForm({
     formData.append("challenge-id", challengeId);
     formData.append("round", String(round));
 
-    // wait 2 seconds before sending the request
+    // wait 2 seconds before sending the request for dramatic purposes
     await new Promise((resolve) => setTimeout(resolve, 2000));
     await guessSong(formData);
   }
@@ -52,7 +51,7 @@ function OptionButton({ option }: { option: string }) {
       type={"submit"}
       className={clsx([
         isSelected ? "bg-orange-400 hover:bg-orange-400 disabled:bg-orange-400" : "bg-none",
-        "rounded-lg w-full text-sm font-mono shadow-3xl border border-[#313131]",
+        "rounded-lg w-full text-sm font-mono shadow-3xl border border-[#313131] disabled:opacity-100",
       ])}
       disabled={pending}
       name="selected-option"

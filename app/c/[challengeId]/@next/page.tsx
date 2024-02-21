@@ -15,7 +15,7 @@ import {
   saveTrackForUser,
   startNextRound,
 } from "@/app/actions";
-import { Heart, HeartOff, Trash } from "lucide-react";
+import { Heart, Trash } from "lucide-react";
 import { CORRECT_ANSWER_POINTS, WRONG_ANSWER_POINTS } from "@/app/utils";
 
 const CORRECT_ANSWER_TITLE = "You guessed correctly!";
@@ -89,13 +89,13 @@ export default async function RoundResult({
           {isTrackSaved === false ? (
             <form action={saveTrackForUserWithId}>
               <SubmitButton>
-                <Heart className="h-4 w-4 mr-2" /> Save track
+                <Heart className="h-4 w-4 mr-2" /> Add to Liked Songs
               </SubmitButton>
             </form>
           ) : (
             <form action={removeSavedTrackForUserWithId}>
               <SubmitButton>
-                <Trash className="h-4 w-4 mr-2" /> Remove track
+                <Trash className="h-4 w-4 mr-2" /> Remove from Liked Songs
               </SubmitButton>
             </form>
           )}

@@ -20,8 +20,9 @@ export default function RootLayout({
       <body
         className={`${GeistSans.variable} ${GeistMono.variable} bg-slate-950 font-mono min-h-screen`}
       >
-        {children}
-        <Player />
+        <Player>
+          {children}
+        </Player>
         <SpeedInsights />
       </body>
     </html>

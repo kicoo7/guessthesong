@@ -36,7 +36,6 @@ export default async function Round({
     () => Math.random() - 0.5
   );
 
-
   return (
     <>
       <div className="absolute top-0 left-0 right-0">

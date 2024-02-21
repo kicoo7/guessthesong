@@ -3,6 +3,7 @@ import { getSessionOrFail } from "@/app/utils";
 import PhoneFrame from "@/components/phone-frame";
 import { notFound } from "next/navigation";
 import { ReactNode } from "react";
+import PlayerController from "@/components/player-controller";
 
 const [NOT_STARTED, IN_PROGRESS, COMPLETED, NEXT_ROUND] = [
   "NOT_STARTED",
@@ -40,6 +41,7 @@ export default async function ChallengeLayout({
   }
 
   const attempt = await attemptPromise;
+  let song = null;
 
   const status = getStatus(attempt);
 
@@ -49,9 +51,11 @@ export default async function ChallengeLayout({
       break;
     case IN_PROGRESS:
       componentToRender = round;
+      song = challenge.songs[attempt?.round - 1];
       break;
     case NEXT_ROUND:
       componentToRender = next;
+      song = challenge.songs[attempt?.round - 1];
       break;
     case COMPLETED:
       componentToRender = score;
@@ -61,6 +65,10 @@ export default async function ChallengeLayout({
   return (
     <main className="md:flex md:justify-center md:items-center md:h-full bg-gray-950 md:bg-none">
       <PhoneFrame>{componentToRender}</PhoneFrame>
+      <PlayerController
+        isPlaying={status === IN_PROGRESS || status === NEXT_ROUND}
+        trackUri={song?.uri}
+      />
     </main>
   );
 }
